@@ -94,6 +94,38 @@
             font-style: italic;
             color: #555;
         }
+
+        .dropdown-section {
+    display: none;
+    margin-top: 10px;
+    background-color: #fff;
+    padding: 10px;
+    border: none;
+}
+
+.dropdown-section p {
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0;
+}
+
+.sign-language-result {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.sign-language-result img {
+    width: 40px;
+    height: 40px;
+    margin-right: 5px;
+}
+
+.sign-language-result span {
+    font-size: 14px;
+    margin-right: 10px;
+}
     </style>
 </head>
 <body>
@@ -250,6 +282,60 @@ function changeFont() {
             resultDiv.innerHTML = 'Bir hata oluştu, lütfen daha sonra tekrar deneyin.';
         }
     }
+    let isSignLanguageMode = false;
+
+function toggleDropdown() {
+    const dropdown = document.getElementById('dropdownSection');
+    const icon = document.getElementById('toggleIcon');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    icon.classList.toggle('fa-caret-up');
+    icon.classList.toggle('fa-caret-down');
+}
+
+function switchToSignLanguage() {
+    document.getElementById('dictionaryTitle').textContent = 'İşaret Dili Sözlüğü';
+    isSignLanguageMode = true;
+    document.getElementById('dropdownSection').style.display = 'none';
+}
+
+async function getWordMeaning() {
+    if (isSignLanguageMode) {
+        searchSignLanguage();
+    } else {
+        // Mevcut kelime anlamı sorgulama kodu
+    }
+}
+
+async function searchSignLanguage() {
+    const word = document.getElementById('word').value.toLowerCase();
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = '';
+
+    if (!word) {
+        resultDiv.innerHTML = 'Lütfen bir kelime girin.';
+        return;
+    }
+
+    const words = word.split(' ');
+
+    words.forEach(group => {
+        const signLanguageDiv = document.createElement('div');
+        signLanguageDiv.className = 'sign-language-result';
+
+        [...group].forEach(letter => {
+            const img = document.createElement('img');
+            img.src = `https://turkcesozluk.github.io/veritabani/id/${letter}.gif`;
+            const span = document.createElement('span');
+            span.textContent = letter.toUpperCase();
+
+            signLanguageDiv.appendChild(img);
+            signLanguageDiv.appendChild(span);
+        });
+
+        resultDiv.appendChild(signLanguageDiv);
+        resultDiv.appendChild(document.createElement('br'));
+    });
+}
 </script>
 </body>
 </html>
