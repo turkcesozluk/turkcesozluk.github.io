@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Türkçe Sözlük</title>
+    <title> k7 Türkçe Sözlük</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap">
@@ -94,8 +94,18 @@
             font-style: italic;
             color: #555;
         }
+        #dictionaryTitle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
 
-        .dropdown-section {
+#toggleIcon {
+    margin-left: 10px;
+    font-size: 18px;
+}
+
+.dropdown-section {
     display: none;
     margin-top: 10px;
     background-color: #fff;
@@ -108,24 +118,6 @@
     font-size: 16px;
     margin: 0;
 }
-
-.sign-language-result {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-
-.sign-language-result img {
-    width: 40px;
-    height: 40px;
-    margin-right: 5px;
-}
-
-.sign-language-result span {
-    font-size: 14px;
-    margin-right: 10px;
-}
     </style>
 </head>
 <body>
@@ -137,13 +129,14 @@
 
 <div class="container">
     <h1 id="dictionaryTitle">
-    Türkçe Sözlük</h1> 
-    <i class="fas fa-caret-down" id="toggleIcon" onclick="toggleDropdown()"></i>
+    Türkçe Sözlük</h1>
     <p>Kelimeyi gir ve anlamını öğren:</p>
+    <i class="fas fa-caret-down" id="toggleIcon" onclick="toggleDropdown()"></i>
 </h1>
 <div id="dropdownSection" class="dropdown-section">
-    <p onclick="switchToSignLanguage()">İşaret Dili Sözlüğü</p>
-</div>
+    <p onclick="switchToDictionary('turkce')">Türkçe Sözlük</p>
+    <p onclick="switchToDictionary('isaret')">İşaret Dili Sözlüğü</p>
+</div>    
     <input type="text" id="word" placeholder="Kelimeyi girin" oninput="handleInput()">
     <div class="suggestions" id="suggestions"></div>
     <button onclick="getWordMeaning()">Sorgula</button>
@@ -163,6 +156,111 @@
 </div>
 
 <script>
+    let currentMode = 'turkce'; // Varsayılan olarak Türkçe Sözlük
+
+function toggleDropdown() {
+    const dropdown = document.getElementById('dropdownSection');
+    const icon = document.getElementById('toggleIcon');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    icon.classList.toggle('fa-caret-up');
+    icon.classList.toggle('fa-caret-down');
+}
+
+function switchToDictionary(mode) {
+    const title = document.getElementById('dictionaryTitle');
+    currentMode = mode;
+    if (mode === 'turkce') {
+        title.textContent = 'Türkçe Sözlük';
+    } else if (mode === 'isaret') {
+        title.textContent = 'İşaret Dili Sözlüğü';
+    }
+    toggleDropdown();
+    title.appendChild(document.getElementById('toggleIcon')); // Üçgen ikonunu yeniden ekle
+}
+
+async function getWordMeaning() {
+    if (currentMode === 'isaret') {
+        searchSignLanguage();
+    } else {
+        // Türkçe Sözlük sorgulama kodu burada çalışacak
+        searchTurkishDictionary();
+    }
+}
+
+async function searchTurkishDictionary() {
+    const word = document.getElementById('word').value;
+    const resultDiv = document.getElementById('result');
+
+    if (!word) {
+        resultDiv.innerHTML = 'Lütfen bir kelime girin.';
+        return;
+    }
+
+    const url = `https://sozluk.gov.tr/gts_id?id=${word}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.error) {
+            resultDiv.innerHTML = 'Kelime bulunamadı.';
+            return;
+        }
+
+        const kelimeData = data[0];
+        const anlamlarListesi = kelimeData.anlamlarListe;
+
+        let resultHTML = `<h2>${kelimeData.madde} kelimesi anlamları:</h2>`;
+
+        anlamlarListesi.forEach(anlam => {
+            resultHTML += `<p><strong>${anlam.anlam_sira}. Anlam (${anlam.ozelliklerListe ? anlam.ozelliklerListe[0].tam_adi : 'Bilinmiyor'}):</strong> ${anlam.anlam}</p>`;
+
+            if (anlam.orneklerListe && anlam.orneklerListe.length > 0) {
+                anlam.orneklerListe.forEach(ornek => {
+                    resultHTML += `<div class="example">"<strong>Örnek:</strong> ${ornek.ornek}"</div>`;
+                });
+            }
+        });
+
+        resultHTML += `<p><strong>Kökeni:</strong> ${kelimeData.lisan ? kelimeData.lisan : 'Bilinmiyor'}</p>`;
+
+        resultDiv.innerHTML = resultHTML;
+    } catch (error) {
+        resultDiv.innerHTML = 'Bir hata oluştu, lütfen daha sonra tekrar deneyin.';
+    }
+}
+
+async function searchSignLanguage() {
+    const word = document.getElementById('word').value.toLowerCase();
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = '';
+
+    if (!word) {
+        resultDiv.innerHTML = 'Lütfen bir kelime girin.';
+        return;
+    }
+
+    const words = word.split(' ');
+
+    words.forEach(group => {
+        const signLanguageDiv = document.createElement('div');
+        signLanguageDiv.className = 'sign-language-result';
+
+        [...group].forEach(letter => {
+            const img = document.createElement('img');
+            img.src = `https://turkcesozluk.github.io/veritabani/id/${letter}.gif`;
+            const span = document.createElement('span');
+            span.textContent = letter.toUpperCase();
+
+            signLanguageDiv.appendChild(img);
+            signLanguageDiv.appendChild(span);
+        });
+
+        resultDiv.appendChild(signLanguageDiv);
+        resultDiv.appendChild(document.createElement('br'));
+    });
+}
+    
     let words = [];
 
     async function loadDatabase() {
@@ -282,60 +380,6 @@ function changeFont() {
             resultDiv.innerHTML = 'Bir hata oluştu, lütfen daha sonra tekrar deneyin.';
         }
     }
-    let isSignLanguageMode = false;
-
-function toggleDropdown() {
-    const dropdown = document.getElementById('dropdownSection');
-    const icon = document.getElementById('toggleIcon');
-    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-    icon.classList.toggle('fa-caret-up');
-    icon.classList.toggle('fa-caret-down');
-}
-
-function switchToSignLanguage() {
-    document.getElementById('dictionaryTitle').textContent = 'İşaret Dili Sözlüğü';
-    isSignLanguageMode = true;
-    document.getElementById('dropdownSection').style.display = 'none';
-}
-
-async function getWordMeaning() {
-    if (isSignLanguageMode) {
-        searchSignLanguage();
-    } else {
-        // Mevcut kelime anlamı sorgulama kodu
-    }
-}
-
-async function searchSignLanguage() {
-    const word = document.getElementById('word').value.toLowerCase();
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = '';
-
-    if (!word) {
-        resultDiv.innerHTML = 'Lütfen bir kelime girin.';
-        return;
-    }
-
-    const words = word.split(' ');
-
-    words.forEach(group => {
-        const signLanguageDiv = document.createElement('div');
-        signLanguageDiv.className = 'sign-language-result';
-
-        [...group].forEach(letter => {
-            const img = document.createElement('img');
-            img.src = `https://turkcesozluk.github.io/veritabani/id/${letter}.gif`;
-            const span = document.createElement('span');
-            span.textContent = letter.toUpperCase();
-
-            signLanguageDiv.appendChild(img);
-            signLanguageDiv.appendChild(span);
-        });
-
-        resultDiv.appendChild(signLanguageDiv);
-        resultDiv.appendChild(document.createElement('br'));
-    });
-}
 </script>
 </body>
 </html>
