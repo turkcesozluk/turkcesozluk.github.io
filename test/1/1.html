@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hey Türkiye | Türkçe Sözlük</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .result {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .result h2 {
+            margin-top: 0;
+        }
+        .example {
+            margin-top: 10px;
+            padding-left: 10px;
+            font-style: italic;
+            color: #555;
+        }
+        .suggestions {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 5px;
+        }
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Türkçe Sözlük</h1>
+    <p>Kelimeyi gir ve anlamını öğren:</p>
+    <input type="text" id="word" placeholder="Kelimeyi girin" oninput="getSuggestions()">
+    <div class="suggestions" id="suggestions"></div>
+    <button onclick="getWordMeaning()">Sorgula</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+    async function getSuggestions() {
+        const word = document.getElementById('word').value;
+        const suggestionsDiv = document.getElementById('suggestions');
+
+        if (!word) {
+            suggestionsDiv.innerHTML = '';
+            return;
+        }
+
+        const url = `https://sozluk.gov.tr/autocomplete.json?q=${word}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            let suggestionsHTML = '';
+            data.forEach(suggestion => {
+                suggestionsHTML += `<div class="suggestion-item" onclick="selectSuggestion('${suggestion.madde}')">${suggestion.madde}</div>`;
+            });
+
+            suggestionsDiv.innerHTML = suggestionsHTML;
+        } catch (error) {
+            suggestionsDiv.innerHTML = 'Öneriler yüklenemedi.';
+        }
+    }
+
+    function selectSuggestion(word) {
+        document.getElementById('word').value = word;
+        document.getElementById('suggestions').innerHTML = '';
+        getWordMeaning();
+    }
+
+    async function getWordMeaning() {
+        const word = document.getElementById('word').value;
+        const resultDiv = document.getElementById('result');
+
+        if (!word) {
+            resultDiv.innerHTML = 'Lütfen bir kelime girin.';
+            return;
+        }
+
+        const url = `https://sozluk.gov.tr/gts_id?id=${word}`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.error) {
+                resultDiv.innerHTML = 'Kelime bulunamadı.';
+                return;
+            }
+
+            const kelimeData = data[0];
+            const anlamlarListesi = kelimeData.anlamlarListe;
+
+            let resultHTML = `<h2>${kelimeData.madde} Kelimesi Anlamları:</h2>`;
+
+            anlamlarListesi.forEach(anlam => {
+                resultHTML += `<p><strong>${anlam.anlam_sira}. Anlam (${anlam.ozelliklerListe ? anlam.ozelliklerListe[0].tam_adi : 'Bilinmiyor'}):</strong> ${anlam.anlam}</p>`;
+
+                if (anlam.orneklerListe && anlam.orneklerListe.length > 0) {
+                    anlam.orneklerListe.forEach(ornek => {
+                        resultHTML += `<div class="example">"<strong>Örnek:</strong> ${ornek.ornek}" </div>`;
+                    });
+                }
+            });
+
+            resultHTML += `<p><strong>Kökeni:</strong> ${kelimeData.lisan ? kelimeData.lisan : 'Bilinmiyor'}</p>`;
+
+            resultDiv.innerHTML = resultHTML;
+        } catch (error) {
+            resultDiv.innerHTML = 'Bir hata oluştu, lütfen daha sonra tekrar deneyin.';
+        }
+    }
+</script>
+</body>
+</html>
