@@ -210,6 +210,7 @@
                 return;
             }
 
+            // Veriyi işleyelim
             const kelimeData = data[0];
             const anlamlarListesi = kelimeData.anlamlarListe;
 
@@ -217,6 +218,13 @@
 
             anlamlarListesi.forEach(anlam => {
                 resultHTML += `<p><strong>${anlam.anlam_sira}. Anlam (${anlam.ozelliklerListe ? anlam.ozelliklerListe[0].tam_adi : 'Bilinmiyor'}):</strong> ${anlam.anlam}</p>`;
+
+                // Örnekler ve yazarları
+                if (anlam.orneklerListe && anlam.orneklerListe.length > 0) {
+                    anlam.orneklerListe.forEach(ornek => {
+                        resultHTML += `<div class="example">"<strong>Örnek:</strong> ${ornek.ornek}" </div>`;
+                    });
+                }
             });
 
             resultHTML += `<p><strong>Kökeni:</strong> ${kelimeData.lisan ? kelimeData.lisan : 'Bilinmiyor'}</p>`;
