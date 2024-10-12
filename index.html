@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap">
     <style>
         body {
-            font-family: Arial, sans-serif;
-        }
+    font-family: 'Montserrat', sans-serif; /* Varsayılan font Montserrat */
+        }  
         .container {
             max-width: 600px;
             margin: 50px auto;
@@ -176,14 +176,18 @@
         overlay.classList.toggle('active');
     }
 
-    function changeFont() {
-        const selectedFont = document.getElementById('fontSelect').value;
-        document.body.style.fontFamily = selectedFont === 'Montserrat' ? "'Montserrat', sans-serif" : 
-                                          selectedFont === 'Roboto' ? "'Roboto', sans-serif" : 
-                                          selectedFont;
-        document.cookie = `selectedFont=${selectedFont}; path=/;`;
+function changeFont() {
+    const selectedFont = document.getElementById('fontSelect').value;
+    document.body.style.fontFamily = selectedFont;
+
+    // Eğer Montserrat veya Roboto fontunu seçerseniz, ilgili fontu ekleyin
+    if (selectedFont === 'Montserrat' || selectedFont === 'Roboto') {
+        document.body.style.fontFamily = `'${selectedFont}', sans-serif`;
     }
 
+    document.cookie = `selectedFont=${selectedFont}; path=/;`;
+}
+    
     function applySavedFont() {
         const cookies = document.cookie.split('; ');
         const selectedFontCookie = cookies.find(cookie => cookie.startsWith('selectedFont='));
