@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hey Türkiye | Türkçe Sözlük</title>
+    <title> 1 Hey Türkiye | Türkçe Sözlük</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap">
@@ -138,7 +138,7 @@
 </div>
 
 <script>
-    let isSignLang = false;
+let isSignLang = false;
 
 function toggleSignLang() {
     isSignLang = !isSignLang; // Değişkenin durumunu değiştir
@@ -147,6 +147,71 @@ function toggleSignLang() {
 
     const title = document.querySelector('.container h1');
     title.innerHTML = isSignLang ? 'İşaret Dili Sözlüğü <i class="fas fa-chevron-up" id="toggleSignLang" onclick="toggleSignLang()"></i>' : 'Türkçe Sözlük <i class="fas fa-chevron-down" id="toggleSignLang" onclick="toggleSignLang()"></i>';
+}
+
+async function getWordMeaning() {
+    const word = document.getElementById('word').value.trim();
+    const resultDiv = document.getElementById('result');
+
+    if (!word) {
+        resultDiv.innerHTML = 'Lütfen bir kelime girin.';
+        return;
+    }
+
+    resultDiv.innerHTML = ''; // Önceki sonuçları temizle
+
+    // Eğer İşaret Dili Sözlüğü aktifse işaret dili anlamlarını göster
+    if (isSignLang) {
+        const baseUrl = 'https://turkcesozluk.github.io/veritabani/id/';
+        const wordsArray = word.split(' ');
+        let resultHTML = '';
+
+        // Her bir kelime için işaret dili anlamını al
+        for (let w of wordsArray) {
+            for (let char of w) {
+                resultHTML += `<img src="${baseUrl}${char}.gif" alt="${char}" style="width: 30px; height: 30px; margin: 0 5px;">`;
+            }
+            resultHTML += '<br>'; // Yeni satıra geç
+        }
+
+        resultDiv.innerHTML = resultHTML;
+    } else {
+        // Türkçe Sözlük için mevcut işlevsellik (bunu değiştirmek istiyorsanız, önceki mantığı kullanın)
+        const url = `https://sozluk.gov.tr/gts_id?id=${word}`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.error) {
+                resultDiv.innerHTML = 'Kelime bulunamadı.';
+                return;
+            }
+
+            // Veriyi işleyelim
+            const kelimeData = data[0];
+            const anlamlarListesi = kelimeData.anlamlarListe;
+
+            let resultHTML = `<h2>${kelimeData.madde} Kelimesi Anlamları:</h2>`;
+
+            anlamlarListesi.forEach(anlam => {
+                resultHTML += `<p><strong>${anlam.anlam_sira}. Anlam (${anlam.ozelliklerListe ? anlam.ozelliklerListe[0].tam_adi : 'Bilinmiyor'}):</strong> ${anlam.anlam}</p>`;
+
+                // Örnekler ve yazarları
+                if (anlam.orneklerListe && anlam.orneklerListe.length > 0) {
+                    anlam.orneklerListe.forEach(ornek => {
+                        resultHTML += `<div class="example">"<strong>Örnek:</strong> ${ornek.ornek}" </div>`;
+                    });
+                }
+            });
+
+            resultHTML += `<p><strong>Kökeni:</strong> ${kelimeData.lisan ? kelimeData.lisan : 'Bilinmiyor'}</p>`;
+
+            resultDiv.innerHTML = resultHTML;
+        } catch (error) {
+            resultDiv.innerHTML = 'Bir hata oluştu, lütfen daha sonra tekrar deneyin.';
+        }
+    }
 }
 
 async function getWordMeaning() {
