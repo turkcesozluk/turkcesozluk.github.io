@@ -94,36 +94,6 @@
             font-style: italic;
             color: #555;
         }
-
-        .dropdown-section {
-    display: none;
-    margin-top: 10px;
-    background-color: #fff;
-    padding: 10px;
-}
-
-.dropdown-section p {
-    cursor: pointer;
-    font-size: 16px;
-    margin: 0;
-}
-
-.sign-language-result {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.sign-language-result img {
-    width: 40px;
-    height: 40px;
-    margin-right: 5px;
-}
-
-.sign-language-result span {
-    font-size: 14px;
-    margin-right: 10px;
-}
     </style>
 </head>
 <body>
@@ -134,10 +104,10 @@
 </div>
 
 <div class="container">
-    <h1>
-    Türkçe Sözlük
-    <p>Kelimeyi gir ve anlamını öğren:</p>
+    <h1 id="dictionaryTitle">
+    Türkçe Sözlük</h1> 
     <i class="fas fa-caret-down" id="toggleIcon" onclick="toggleDropdown()"></i>
+    <p>Kelimeyi gir ve anlamını öğren:</p>
 </h1>
 <div id="dropdownSection" class="dropdown-section">
     <p onclick="switchToSignLanguage()">İşaret Dili Sözlüğü</p>
@@ -161,43 +131,6 @@
 </div>
 
 <script>
-    function toggleDropdown() {
-    const dropdown = document.getElementById('dropdownSection');
-    const icon = document.getElementById('toggleIcon');
-    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-    icon.classList.toggle('fa-caret-up');
-    icon.classList.toggle('fa-caret-down');
-}
-
-function switchToSignLanguage() {
-    document.querySelector('h1').textContent = 'İşaret Dili Sözlüğü';
-    document.getElementById('dropdownSection').style.display = 'none';
-}
-
-async function searchSignLanguage(word) {
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = '';
-
-    const letters = word.toLowerCase().split(' ');
-    letters.forEach(group => {
-        const signLanguageDiv = document.createElement('div');
-        signLanguageDiv.className = 'sign-language-result';
-
-        [...group].forEach(letter => {
-            const img = document.createElement('img');
-            img.src = `https://turkcesozluk.github.io/veritabani/id/${letter}.gif`;
-            const span = document.createElement('span');
-            span.textContent = letter.toUpperCase();
-
-            signLanguageDiv.appendChild(img);
-            signLanguageDiv.appendChild(span);
-        });
-
-        resultDiv.appendChild(signLanguageDiv);
-        resultDiv.appendChild(document.createElement('br'));
-    });
-}
-    
     let words = [];
 
     async function loadDatabase() {
