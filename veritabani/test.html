@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkçe Sözlük</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap">
+    <style>
+        body {
+    font-family: 'Montserrat', sans-serif; /* Varsayılan font Montserrat */
+        }  
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .top-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .top-right a {
+            margin-left: 15px;
+            font-size: 20px;
+            color: #333;
+            text-decoration: none;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .result {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .result h2 {
+            margin-top: 0;
+        }
+        .suggestions {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 5px;
+        }
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .settings-modal.active {
+            display: block;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .modal-overlay.active {
+            display: block;
+        }
+        .example {
+            margin-top: 10px;
+            padding-left: 10px;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-right">
+    <a href="https://github.com/turkcesozluk/turkcesozluk.github.io/" target="_blank"><i class="fab fa-github"></i></a>
+    <a href="#" onclick="toggleSettingsModal()"><i class="fas fa-cog"></i></a>
+</div>
+
+<div class="container">
+    <h1>Türkçe Sözlük</h1>
+    <p>Kelimeyi gir ve anlamını öğren:</p>
+    <input type="text" id="word" placeholder="Kelimeyi girin" oninput="handleInput()">
+    <div class="suggestions" id="suggestions"></div>
+    <button onclick="getWordMeaning()">Sorgula</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay"></div>
+<div class="settings-modal" id="settingsModal">
+    <h3>Font Seçimi</h3>
+    <select id="fontSelect" onchange="changeFont()">
+        <option value="Arial">Arial</option>
+        <option value="Montserrat">Montserrat</option>
+        <option value="Raleway">Raleway</option>
+    </select>
+    <button onclick="toggleSettingsModal()">Kapat</button>
+</div>
+
+<script>
+    let words = [];
+
+    async function loadDatabase() {
+        try {
+            const response = await fetch('/veritabani/index.js');
+            const data = await response.text();
+            
+            const jsonData = JSON.parse(data.replace("export default ", "").trim());
+            words = jsonData;
+        } catch (error) {
+            console.error("Veritabanı yüklenemedi:", error);
+        }
+    }
+
+    window.onload = () => {
+        loadDatabase();
+        applySavedFont();
+    };
+
+    function handleInput() {
+        const word = document.getElementById('word').value.toLowerCase();
+        const suggestionsDiv = document.getElementById('suggestions');
+
+        if (!word) {
+            suggestionsDiv.innerHTML = '';
+            return;
+        }
+
+        const filteredWords = words.filter(item => item.madde.toLowerCase().startsWith(word)).slice(0, 5);
+        let suggestionsHTML = '';
+
+        filteredWords.forEach(suggestion => {
+            suggestionsHTML += `<div class="suggestion-item" onclick="selectSuggestion('${suggestion.madde}')">${suggestion.madde}</div>`;
+        });
+
+        suggestionsDiv.innerHTML = suggestionsHTML;
+    }
+
+    function selectSuggestion(word) {
+        document.getElementById('word').value = word;
+        document.getElementById('suggestions').innerHTML = '';
+        getWordMeaning();
+    }
+
+    function toggleSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        const overlay = document.getElementById('modalOverlay');
+        modal.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+
+function changeFont() {
+    const selectedFont = document.getElementById('fontSelect').value;
+    document.body.style.fontFamily = selectedFont;
+
+    // Eğer Montserrat veya Roboto fontunu seçerseniz, ilgili fontu ekleyin
+    if (selectedFont === 'Montserrat' || selectedFont === 'Raleway') {
+        document.body.style.fontFamily = `'${selectedFont}', sans-serif`;
+    }
+
+    document.cookie = `selectedFont=${selectedFont}; path=/;`;
+}
+    
+    function applySavedFont() {
+        const cookies = document.cookie.split('; ');
+        const selectedFontCookie = cookies.find(cookie => cookie.startsWith('selectedFont='));
+        if (selectedFontCookie) {
+            const selectedFont = selectedFontCookie.split('=')[1];
+            document.body.style.fontFamily = selectedFont === 'Montserrat' ? "'Montserrat', sans-serif" : 
+                                              selectedFont === 'Raleway' ? "'Raleway', sans-serif" : 
+                                              selectedFont;
+            document.getElementById('fontSelect').value = selectedFont;
+        }
+    }
+
+    async function getWordMeaning() {
+        const word = document.getElementById('word').value;
+        const resultDiv = document.getElementById('result');
+
+        if (!word) {
+            resultDiv.innerHTML = 'Lütfen bir kelime girin.';
+            return;
+        }
+
+        const url = `https://sozluk.gov.tr/gts_id?id=${word}`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.error) {
+                resultDiv.innerHTML = 'Kelime bulunamadı.';
+                return;
+            }
+
+            // Veriyi işleyelim
+            const kelimeData = data[0];
+            const anlamlarListesi = kelimeData.anlamlarListe;
+
+            let resultHTML = `<h2>${kelimeData.madde} kelimesi anlamları:</h2>`;
+
+            anlamlarListesi.forEach(anlam => {
+                resultHTML += `<p><strong>${anlam.anlam_sira}. Anlam (${anlam.ozelliklerListe ? anlam.ozelliklerListe[0].tam_adi : 'Bilinmiyor'}):</strong> ${anlam.anlam}</p>`;
+
+                // Örnekler ve yazarları
+                if (anlam.orneklerListe && anlam.orneklerListe.length > 0) {
+                    anlam.orneklerListe.forEach(ornek => {
+                        resultHTML += `<div class="example">"<strong>Örnek:</strong> ${ornek.ornek}" </div>`;
+                    });
+                }
+            });
+
+            resultHTML += `<p><strong>Kökeni:</strong> ${kelimeData.lisan ? kelimeData.lisan : 'Bilinmiyor'}</p>`;
+
+            resultDiv.innerHTML = resultHTML;
+        } catch (error) {
+            resultDiv.innerHTML = 'Bir hata oluştu, lütfen daha sonra tekrar deneyin.';
+        }
+    }
+</script>
+</body>
+</html>
